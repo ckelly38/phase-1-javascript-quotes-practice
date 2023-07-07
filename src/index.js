@@ -252,12 +252,55 @@ function loadQuotesOnDOM()
             mylikebtn.addEventListener("click", function(event){
                 console.log("like button clicked!");
                 console.log("this.id = " + this.id);
-                console.error("NOT DONE YET 7-6-2023 5:30 PM!");
+                
+                let myidnumstr = this.id.substring(0, this.id.indexOf("likebtn"));
+                console.log("myidnumstr = " + myidnumstr);
+                if (myidnumstr.length < 1) throw "failed to get the id from the id string!";
+                //else;//do nothing
+
                 //the createdAt: new Date().getTime();
                 //id, quoteId
                 //the quoteId will be the id of the quote liked as a string
                 //the id will be the id of the new like
-                debugger;
+
+                let mylikeobj = {
+                    createdAt: new Date().getTime(),
+                    quoteId: Number(myidnumstr)
+                };
+                let myconfigobj = {
+                    method: "POST",
+                    headers: {
+                        "Content-Type" :  "application/json",
+                        "Accept" : "application/json"
+                    },
+                    body: JSON.stringify(mylikeobj)
+                };
+                fetch("http://localhost:3000/likes/", myconfigobj).
+                then((oresponse) => oresponse.json()).
+                then(function(oresponse){
+                    console.log("oresponse = " + oresponse);
+                    //"http://localhost:3000/quotes?_embed=likes"
+                    fetch("http://localhost:3000/quotes/" + myidnumstr + "?_embed=likes").
+                    then((ooresponse) => ooresponse.json()).
+                    then(function(ooresponse){
+                        console.log("ooresponse = " + ooresponse);
+                        console.log("ooresponse.likes.length = " + ooresponse.likes.length);
+                        let myqtcard = document.getElementById(myidnumstr);
+                        let mynumlikes = myqtcard.getElementsByTagName("span")[0];
+                        mynumlikes.textContent = "" + ooresponse.likes.length;
+                        //length of the likes array
+                        console.log("successfully added a new like to the quote!");
+                        //debugger;
+                    }).catch(function(err){
+                        console.error("failed to delete the quote!");
+                        console.error(err);
+                    });
+                    //debugger;
+                }).catch(function(err){
+                    console.error("failed to delete the quote!");
+                    console.error(err);
+                });
+                //debugger;
             }.bind(mylikebtn));
         }//end of n for loop
         console.log("the like buttons are all hooked up!");
@@ -280,9 +323,16 @@ function loadQuotesOnDOM()
 
         //set up the sort by author button
         let mysrtatrbtn = document.createElement("button");
+        mysrtatrbtn.id = "sortatrnmbtn";
         mysrtatrbtn.textContent = "Sort By Author: OFF";
         document.getElementsByTagName("body")[0].insertBefore(mysrtatrbtn, firstdiv);
-        console.error("NOT DONE YET 7-6-2023 5:30 PM!");
+        let mysrtathrbtndom = document.getElementById("sortatrnmbtn");
+        mysrtathrbtndom.addEventListener("click", function(event){
+            console.log("clicked the sort by author name button!");
+            console.error("NOT DONE YET 7-6-2023 5:30 PM!");
+            debugger;
+        }.bind(mysrtathrbtndom));
+        console.log("successfully linked up the sort by author name button!");
     })
     .catch(function(err){
         console.error("there was an error getting the quotes!");
