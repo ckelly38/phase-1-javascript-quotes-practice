@@ -20,7 +20,8 @@ function addQuoteToDOM(qtobj)
     //createdAt, id, quoteId
     //<li class='quote-card'>
     //<blockquote class="blockquote">
-    //<p class="mb-0">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante.</p>
+    //<p class="mb-0">Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+    //Integer posuere erat a ante.</p>
     //<footer class="blockquote-footer">Someone famous</footer>
     //<br>
     //<button class='btn-success'>Likes: <span>0</span></button>
@@ -75,17 +76,134 @@ function loadQuotesOnDOM()
             myqtlist.appendChild(addQuoteToDOM(myquotes[n]));
         }//end of n for loop
         console.log("successfully added the quotes!");
-        debugger;
+        //debugger;
 
         //now need to set up the buttons here
+        //set up the edit form here
+        let myeditfrm = document.createElement("div");
+        myeditfrm.id = "myeditfrm";
+        let myqttxt = document.createElement("textarea");
+        let mynl = document.createElement("br");
+        let myonl = document.createElement("br");
+        let myatrnm = document.createElement("textarea");
+        let mydonebtn = document.createElement("button");
+        myqttxt.rows = 4;
+        myqttxt.cols = 150;
+        myqttxt.placeholder = "quote";
+        myqttxt.name = "equote";
+        myatrnm.cols = 50;
+        myatrnm.placeholder = "author's name";
+        myatrnm.name = "aname";
+        mydonebtn.textContent = "Done";
+        myeditfrm.appendChild(myqttxt);
+        myeditfrm.appendChild(mynl);
+        myeditfrm.appendChild(myatrnm);
+        myeditfrm.appendChild(myonl);
+        myeditfrm.appendChild(mydonebtn);
+        myeditfrm.style.display = "none";
+        let firstdiv = document.querySelector("div");
+        document.getElementsByTagName("body")[0].insertBefore(myeditfrm, firstdiv);
+
+        //set up the edit buttons here
         for (let n = 0; n < myquotes.length; n++)
         {
             let myeditbtn = document.getElementById(myquotes[n].id + "editbtn");
             myeditbtn.addEventListener("click", function(event){
                 console.log("edit button clicked!");
                 console.log("this.id = " + this.id);
-                console.error("NOT DONE YET 7-6-2023 5:30 PM!");
-                debugger;
+                let myidnumstr = this.id.substring(0, this.id.indexOf("editbtn"));
+                let myeditfrmondom = document.getElementById("myeditfrm");
+                let mytxts = myeditfrmondom.getElementsByTagName("textarea");
+                let myli = document.getElementById(myidnumstr);
+                let myqtelem = myli.getElementsByTagName("p")[0];
+                let myatrelem = myli.getElementsByTagName("footer")[0];
+                mytxts[0].value = "" + myqtelem.textContent;
+                mytxts[1].value = "" + myatrelem.textContent;
+                let mysbmtbtn = myeditfrmondom.getElementsByTagName("button")[0];
+                mysbmtbtn.id = myidnumstr + "edtfrmbtn";
+                myeditfrmondom.style.display = "block";
+                
+                mysbmtbtn.addEventListener("click", function(oevent){
+                    console.log("done button clicked!");
+                    console.log("this.id = " + this.id);
+                    console.log("quote = mytxts[0].value = " + mytxts[0].value);
+                    console.log("author = mytxts[1].value = " + mytxts[1].value);
+                    let myoidnumstr = this.id.substring(0, this.id.indexOf("edtfrmbtn"));
+                    console.log("myoidnumstr = " + myoidnumstr);
+                    //for each quote:
+                    //author, id, likes array, quote
+                    //the likes array has:
+                    //createdAt, id, quoteId
+                    //let mylikesarr = new Array();
+                    //get the original likes array for the quote somehow
+                    //let qtifnd = false;
+                    //for (let k = 0; k < myquotes.length; k++)
+                    //{
+                    //    let tempidstr = "" + myquotes[k].id;
+                    //    console.log("tempidstr = " + tempidstr);
+                    //    console.log("myoidnumstr = " + myoidnumstr);
+                    //    if (tempidstr === myoidnumstr)
+                    //    {
+                    //        console.log("found the quote object at k = " + k + "!");
+                    //        qtifnd = true;
+                    //        let mytemplikesarr = myquotes[k].likes;
+                    //        console.log("myquotes[" + k + "].likes = " + mytemplikesarr);
+                    //        for (let c = 0; c < mytemplikesarr.length; c++)
+                    //        {
+                    //            let mylikeobj = {
+                    //                createdAt: mytemplikesarr[c].createdAt,
+                    //                id: mytemplikesarr[c].id,
+                    //                quoteId: mytemplikesarr[c].quoteId
+                    //            };
+                    //            mylikesarr.push(mylikeobj);
+                    //        }//end of c for loop
+                    //        break;
+                    //    }
+                    //    //else;//do nothing
+                    //}//end of k for loop
+                    //console.log("qtifnd = " + qtifnd);
+                    //if (qtifnd);
+                    //else throw "the quote id must be found, but it was not!";
+                    let mynwqtobj = {
+                        author: mytxts[1].value,
+                        id: Number(myoidnumstr),
+                        quote: mytxts[0].value
+                    };//likes: mylikesarr,
+
+                    let myconfigobj = {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type" :  "application/json",
+                            "Accept" : "application/json"
+                        },
+                        body: JSON.stringify(mynwqtobj)
+                    };
+                    fetch("http://localhost:3000/quotes/" + myoidnumstr, myconfigobj).
+                    then((oresponse) => oresponse.json()).
+                    then(function(oresponse){
+                        console.log("oresponse = " + oresponse);
+                        console.log("myoidnumstr = " + myoidnumstr);
+                        //modify the DOM
+                        let omyli = document.getElementById(myoidnumstr);
+                        let omyqtelem = omyli.getElementsByTagName("p")[0];
+                        let omyatrelem = omyli.getElementsByTagName("footer")[0];
+                        omyqtelem.textContent = "" + oresponse.quote;
+                        omyatrelem.textContent = "" + oresponse.author;
+                        
+                        //eventually we will want to hide the edit form and clear out the values
+                        let omyeditfrmondom = document.getElementById("myeditfrm");
+                        let omytxts = omyeditfrmondom.getElementsByTagName("textarea");
+                        omytxts[0].value = "";
+                        omytxts[1].value = "";
+                        omyeditfrmondom.style.display = "none";
+                        console.log("DONE SAVING THE DATA TO THE DOM!");
+                        //debugger;
+                    }).catch(function(err){
+                        console.error("failed to delete the quote!");
+                        console.error(err);
+                    });
+                    //debugger;
+                }.bind(mysbmtbtn));
             }.bind(myeditbtn));
         }//end of n for loop
         console.log("the edit buttons are all hooked up!");
@@ -118,12 +236,12 @@ function loadQuotesOnDOM()
                     removeAllKids(myqtcard);
                     console.log("done removing all of the elements related to that quote from " +
                         "the DOM");
-                    debugger;
+                    //debugger;
                 }).catch(function(err){
                     console.error("failed to delete the quote!");
                     console.error(err);
                 });
-                debugger;
+                //debugger;
             }.bind(mydelbtn));
         }//end of n for loop
         console.log("the delete buttons are all hooked up!");
@@ -161,6 +279,9 @@ function loadQuotesOnDOM()
         console.log("hooked up the add new quote form buttons!");
 
         //set up the sort by author button
+        let mysrtatrbtn = document.createElement("button");
+        mysrtatrbtn.textContent = "Sort By Author: OFF";
+        document.getElementsByTagName("body")[0].insertBefore(mysrtatrbtn, firstdiv);
         console.error("NOT DONE YET 7-6-2023 5:30 PM!");
     })
     .catch(function(err){
