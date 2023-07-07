@@ -63,6 +63,200 @@ function addQuoteToDOM(qtobj)
     return myli;
 }
 
+function addEditListenerToButton(button)
+{
+    button.addEventListener("click", function(event){
+        console.log("edit button clicked!");
+        console.log("this.id = " + this.id);
+        let myidnumstr = this.id.substring(0, this.id.indexOf("editbtn"));
+        let myeditfrmondom = document.getElementById("myeditfrm");
+        let mytxts = myeditfrmondom.getElementsByTagName("textarea");
+        let myli = document.getElementById(myidnumstr);
+        let myqtelem = myli.getElementsByTagName("p")[0];
+        let myatrelem = myli.getElementsByTagName("footer")[0];
+        mytxts[0].value = "" + myqtelem.textContent;
+        mytxts[1].value = "" + myatrelem.textContent;
+        let mysbmtbtn = myeditfrmondom.getElementsByTagName("button")[0];
+        mysbmtbtn.id = myidnumstr + "edtfrmbtn";
+        myeditfrmondom.style.display = "block";
+        
+        mysbmtbtn.addEventListener("click", function(oevent){
+            console.log("done button clicked!");
+            console.log("this.id = " + this.id);
+            console.log("quote = mytxts[0].value = " + mytxts[0].value);
+            console.log("author = mytxts[1].value = " + mytxts[1].value);
+            let myoidnumstr = this.id.substring(0, this.id.indexOf("edtfrmbtn"));
+            console.log("myoidnumstr = " + myoidnumstr);
+            //for each quote:
+            //author, id, likes array, quote
+            //the likes array has:
+            //createdAt, id, quoteId
+            //let mylikesarr = new Array();
+            //get the original likes array for the quote somehow
+            //let qtifnd = false;
+            //for (let k = 0; k < myquotes.length; k++)
+            //{
+            //    let tempidstr = "" + myquotes[k].id;
+            //    console.log("tempidstr = " + tempidstr);
+            //    console.log("myoidnumstr = " + myoidnumstr);
+            //    if (tempidstr === myoidnumstr)
+            //    {
+            //        console.log("found the quote object at k = " + k + "!");
+            //        qtifnd = true;
+            //        let mytemplikesarr = myquotes[k].likes;
+            //        console.log("myquotes[" + k + "].likes = " + mytemplikesarr);
+            //        for (let c = 0; c < mytemplikesarr.length; c++)
+            //        {
+            //            let mylikeobj = {
+            //                createdAt: mytemplikesarr[c].createdAt,
+            //                id: mytemplikesarr[c].id,
+            //                quoteId: mytemplikesarr[c].quoteId
+            //            };
+            //            mylikesarr.push(mylikeobj);
+            //        }//end of c for loop
+            //        break;
+            //    }
+            //    //else;//do nothing
+            //}//end of k for loop
+            //console.log("qtifnd = " + qtifnd);
+            //if (qtifnd);
+            //else throw "the quote id must be found, but it was not!";
+            let mynwqtobj = {
+                author: mytxts[1].value,
+                id: Number(myoidnumstr),
+                quote: mytxts[0].value
+            };//likes: mylikesarr,
+
+            let myconfigobj = {
+                method: "PATCH",
+                headers: {
+                    "Content-Type" :  "application/json",
+                    "Accept" : "application/json"
+                },
+                body: JSON.stringify(mynwqtobj)
+            };
+            fetch("http://localhost:3000/quotes/" + myoidnumstr, myconfigobj).
+            then((oresponse) => oresponse.json()).
+            then(function(oresponse){
+                console.log("oresponse = " + oresponse);
+                console.log("myoidnumstr = " + myoidnumstr);
+                //modify the DOM
+                let omyli = document.getElementById(myoidnumstr);
+                let omyqtelem = omyli.getElementsByTagName("p")[0];
+                let omyatrelem = omyli.getElementsByTagName("footer")[0];
+                omyqtelem.textContent = "" + oresponse.quote;
+                omyatrelem.textContent = "" + oresponse.author;
+                
+                //eventually we will want to hide the edit form and clear out the values
+                let omyeditfrmondom = document.getElementById("myeditfrm");
+                let omytxts = omyeditfrmondom.getElementsByTagName("textarea");
+                omytxts[0].value = "";
+                omytxts[1].value = "";
+                omyeditfrmondom.style.display = "none";
+                console.log("DONE SAVING THE DATA TO THE DOM!");
+                //debugger;
+            }).catch(function(err){
+                console.error("failed to edit the quote!");
+                console.error(err);
+            });
+            //debugger;
+        }.bind(mysbmtbtn));
+    }.bind(button));
+}
+
+function addDeleteListenerToButton(button)
+{
+    button.addEventListener("click", function(event){
+        console.log("delete button clicked!");
+        console.log("this.id = " + this.id);
+        let myidnumstr = this.id.substring(0, this.id.indexOf("delbtn"));
+        console.log("myidnumstr = " + myidnumstr);
+        if (myidnumstr.length < 1) throw "failed to get the id from the id string!";
+        //else;//do nothing
+        let myconfigobj = {
+            method: "DELETE",
+            headers: {
+                "Content-Type" :  "application/json",
+                "Accept" : "application/json"
+            }
+        };
+        fetch("http://localhost:3000/quotes/" + myidnumstr, myconfigobj).
+        then((oresponse) => oresponse.json()).
+        then(function(oresponse){
+            console.log("oresponse = " + oresponse);
+            //we also need to remove it from the likes list
+            //it seems that the delete method takes care of that
+            //now remove the quote card and all of its kids from the dom
+            let myqtcard = document.getElementById(myidnumstr);
+            removeAllKids(myqtcard);
+            console.log("done removing all of the elements related to that quote from " +
+                "the DOM");
+            //debugger;
+        }).catch(function(err){
+            console.error("failed to delete the quote!");
+            console.error(err);
+        });
+        //debugger;
+    }.bind(button));
+}
+
+function addLikeListenerToButton(button)
+{
+    button.addEventListener("click", function(event){
+        console.log("like button clicked!");
+        console.log("this.id = " + this.id);
+        
+        let myidnumstr = this.id.substring(0, this.id.indexOf("likebtn"));
+        console.log("myidnumstr = " + myidnumstr);
+        if (myidnumstr.length < 1) throw "failed to get the id from the id string!";
+        //else;//do nothing
+
+        //the createdAt: new Date().getTime();
+        //id, quoteId
+        //the quoteId will be the id of the quote liked as a string
+        //the id will be the id of the new like
+
+        let mylikeobj = {
+            createdAt: new Date().getTime(),
+            quoteId: Number(myidnumstr)
+        };
+        let myconfigobj = {
+            method: "POST",
+            headers: {
+                "Content-Type" :  "application/json",
+                "Accept" : "application/json"
+            },
+            body: JSON.stringify(mylikeobj)
+        };
+        fetch("http://localhost:3000/likes/", myconfigobj).
+        then((oresponse) => oresponse.json()).
+        then(function(oresponse){
+            console.log("oresponse = " + oresponse);
+            //"http://localhost:3000/quotes?_embed=likes"
+            fetch("http://localhost:3000/quotes/" + myidnumstr + "?_embed=likes").
+            then((ooresponse) => ooresponse.json()).
+            then(function(ooresponse){
+                console.log("ooresponse = " + ooresponse);
+                console.log("ooresponse.likes.length = " + ooresponse.likes.length);
+                let myqtcard = document.getElementById(myidnumstr);
+                let mynumlikes = myqtcard.getElementsByTagName("span")[0];
+                mynumlikes.textContent = "" + ooresponse.likes.length;
+                //length of the likes array
+                console.log("successfully added a new like to the quote!");
+                //debugger;
+            }).catch(function(err){
+                console.error("failed to add the new like to the quote!");
+                console.error(err);
+            });
+            //debugger;
+        }).catch(function(err){
+            console.error("failed to add the new like to the quote!");
+            console.error(err);
+        });
+        //debugger;
+    }.bind(button));
+}
+
 function loadQuotesOnDOM()
 {
     fetch("http://localhost:3000/quotes?_embed=likes").then((response) => response.json()).
@@ -108,200 +302,21 @@ function loadQuotesOnDOM()
         for (let n = 0; n < myquotes.length; n++)
         {
             let myeditbtn = document.getElementById(myquotes[n].id + "editbtn");
-            myeditbtn.addEventListener("click", function(event){
-                console.log("edit button clicked!");
-                console.log("this.id = " + this.id);
-                let myidnumstr = this.id.substring(0, this.id.indexOf("editbtn"));
-                let myeditfrmondom = document.getElementById("myeditfrm");
-                let mytxts = myeditfrmondom.getElementsByTagName("textarea");
-                let myli = document.getElementById(myidnumstr);
-                let myqtelem = myli.getElementsByTagName("p")[0];
-                let myatrelem = myli.getElementsByTagName("footer")[0];
-                mytxts[0].value = "" + myqtelem.textContent;
-                mytxts[1].value = "" + myatrelem.textContent;
-                let mysbmtbtn = myeditfrmondom.getElementsByTagName("button")[0];
-                mysbmtbtn.id = myidnumstr + "edtfrmbtn";
-                myeditfrmondom.style.display = "block";
-                
-                mysbmtbtn.addEventListener("click", function(oevent){
-                    console.log("done button clicked!");
-                    console.log("this.id = " + this.id);
-                    console.log("quote = mytxts[0].value = " + mytxts[0].value);
-                    console.log("author = mytxts[1].value = " + mytxts[1].value);
-                    let myoidnumstr = this.id.substring(0, this.id.indexOf("edtfrmbtn"));
-                    console.log("myoidnumstr = " + myoidnumstr);
-                    //for each quote:
-                    //author, id, likes array, quote
-                    //the likes array has:
-                    //createdAt, id, quoteId
-                    //let mylikesarr = new Array();
-                    //get the original likes array for the quote somehow
-                    //let qtifnd = false;
-                    //for (let k = 0; k < myquotes.length; k++)
-                    //{
-                    //    let tempidstr = "" + myquotes[k].id;
-                    //    console.log("tempidstr = " + tempidstr);
-                    //    console.log("myoidnumstr = " + myoidnumstr);
-                    //    if (tempidstr === myoidnumstr)
-                    //    {
-                    //        console.log("found the quote object at k = " + k + "!");
-                    //        qtifnd = true;
-                    //        let mytemplikesarr = myquotes[k].likes;
-                    //        console.log("myquotes[" + k + "].likes = " + mytemplikesarr);
-                    //        for (let c = 0; c < mytemplikesarr.length; c++)
-                    //        {
-                    //            let mylikeobj = {
-                    //                createdAt: mytemplikesarr[c].createdAt,
-                    //                id: mytemplikesarr[c].id,
-                    //                quoteId: mytemplikesarr[c].quoteId
-                    //            };
-                    //            mylikesarr.push(mylikeobj);
-                    //        }//end of c for loop
-                    //        break;
-                    //    }
-                    //    //else;//do nothing
-                    //}//end of k for loop
-                    //console.log("qtifnd = " + qtifnd);
-                    //if (qtifnd);
-                    //else throw "the quote id must be found, but it was not!";
-                    let mynwqtobj = {
-                        author: mytxts[1].value,
-                        id: Number(myoidnumstr),
-                        quote: mytxts[0].value
-                    };//likes: mylikesarr,
-
-                    let myconfigobj = {
-                        method: "PATCH",
-                        headers: {
-                            "Content-Type" :  "application/json",
-                            "Accept" : "application/json"
-                        },
-                        body: JSON.stringify(mynwqtobj)
-                    };
-                    fetch("http://localhost:3000/quotes/" + myoidnumstr, myconfigobj).
-                    then((oresponse) => oresponse.json()).
-                    then(function(oresponse){
-                        console.log("oresponse = " + oresponse);
-                        console.log("myoidnumstr = " + myoidnumstr);
-                        //modify the DOM
-                        let omyli = document.getElementById(myoidnumstr);
-                        let omyqtelem = omyli.getElementsByTagName("p")[0];
-                        let omyatrelem = omyli.getElementsByTagName("footer")[0];
-                        omyqtelem.textContent = "" + oresponse.quote;
-                        omyatrelem.textContent = "" + oresponse.author;
-                        
-                        //eventually we will want to hide the edit form and clear out the values
-                        let omyeditfrmondom = document.getElementById("myeditfrm");
-                        let omytxts = omyeditfrmondom.getElementsByTagName("textarea");
-                        omytxts[0].value = "";
-                        omytxts[1].value = "";
-                        omyeditfrmondom.style.display = "none";
-                        console.log("DONE SAVING THE DATA TO THE DOM!");
-                        //debugger;
-                    }).catch(function(err){
-                        console.error("failed to delete the quote!");
-                        console.error(err);
-                    });
-                    //debugger;
-                }.bind(mysbmtbtn));
-            }.bind(myeditbtn));
+            addEditListenerToButton(myeditbtn);
         }//end of n for loop
         console.log("the edit buttons are all hooked up!");
 
         for (let n = 0; n < myquotes.length; n++)
         {
             let mydelbtn = document.getElementById(myquotes[n].id + "delbtn");
-            mydelbtn.addEventListener("click", function(event){
-                console.log("delete button clicked!");
-                console.log("this.id = " + this.id);
-                let myidnumstr = this.id.substring(0, this.id.indexOf("delbtn"));
-                console.log("myidnumstr = " + myidnumstr);
-                if (myidnumstr.length < 1) throw "failed to get the id from the id string!";
-                //else;//do nothing
-                let myconfigobj = {
-                    method: "DELETE",
-                    headers: {
-                        "Content-Type" :  "application/json",
-                        "Accept" : "application/json"
-                    }
-                };
-                fetch("http://localhost:3000/quotes/" + myidnumstr, myconfigobj).
-                then((oresponse) => oresponse.json()).
-                then(function(oresponse){
-                    console.log("oresponse = " + oresponse);
-                    //we also need to remove it from the likes list
-                    //it seems that the delete method takes care of that
-                    //now remove the quote card and all of its kids from the dom
-                    let myqtcard = document.getElementById(myidnumstr);
-                    removeAllKids(myqtcard);
-                    console.log("done removing all of the elements related to that quote from " +
-                        "the DOM");
-                    //debugger;
-                }).catch(function(err){
-                    console.error("failed to delete the quote!");
-                    console.error(err);
-                });
-                //debugger;
-            }.bind(mydelbtn));
+            addDeleteListenerToButton(mydelbtn);
         }//end of n for loop
         console.log("the delete buttons are all hooked up!");
 
         for (let n = 0; n < myquotes.length; n++)
         {
             let mylikebtn = document.getElementById(myquotes[n].id + "likebtn");
-            mylikebtn.addEventListener("click", function(event){
-                console.log("like button clicked!");
-                console.log("this.id = " + this.id);
-                
-                let myidnumstr = this.id.substring(0, this.id.indexOf("likebtn"));
-                console.log("myidnumstr = " + myidnumstr);
-                if (myidnumstr.length < 1) throw "failed to get the id from the id string!";
-                //else;//do nothing
-
-                //the createdAt: new Date().getTime();
-                //id, quoteId
-                //the quoteId will be the id of the quote liked as a string
-                //the id will be the id of the new like
-
-                let mylikeobj = {
-                    createdAt: new Date().getTime(),
-                    quoteId: Number(myidnumstr)
-                };
-                let myconfigobj = {
-                    method: "POST",
-                    headers: {
-                        "Content-Type" :  "application/json",
-                        "Accept" : "application/json"
-                    },
-                    body: JSON.stringify(mylikeobj)
-                };
-                fetch("http://localhost:3000/likes/", myconfigobj).
-                then((oresponse) => oresponse.json()).
-                then(function(oresponse){
-                    console.log("oresponse = " + oresponse);
-                    //"http://localhost:3000/quotes?_embed=likes"
-                    fetch("http://localhost:3000/quotes/" + myidnumstr + "?_embed=likes").
-                    then((ooresponse) => ooresponse.json()).
-                    then(function(ooresponse){
-                        console.log("ooresponse = " + ooresponse);
-                        console.log("ooresponse.likes.length = " + ooresponse.likes.length);
-                        let myqtcard = document.getElementById(myidnumstr);
-                        let mynumlikes = myqtcard.getElementsByTagName("span")[0];
-                        mynumlikes.textContent = "" + ooresponse.likes.length;
-                        //length of the likes array
-                        console.log("successfully added a new like to the quote!");
-                        //debugger;
-                    }).catch(function(err){
-                        console.error("failed to delete the quote!");
-                        console.error(err);
-                    });
-                    //debugger;
-                }).catch(function(err){
-                    console.error("failed to delete the quote!");
-                    console.error(err);
-                });
-                //debugger;
-            }.bind(mylikebtn));
+            addLikeListenerToButton(mylikebtn);
         }//end of n for loop
         console.log("the like buttons are all hooked up!");
 
@@ -311,13 +326,72 @@ function loadQuotesOnDOM()
             event.preventDefault();
             //now get the data from the form...
             console.log("event.target = " + event.target);
-            console.error("NOT DONE YET 7-6-2023 5:30 PM!");
+            
+            let myqt = event.target[0].value;
+            let myatr = event.target[1].value;
+            console.log("myqt = event.target[0].value = " + myqt);
+            console.log("myatr = event.target[1].value = " + myatr);
+
             //create the new quote object and load the data in
             //get the id from the server
             //the likes will be an empty array
             //then we will add the response to the dom
             //addQuoteToDOM(qtobj)
-            debugger;
+            
+            //for each quote:
+            //author, id, likes array, quote
+            //the likes array has:
+            //createdAt, id, quoteId
+            //let mylikesarr = new Array();
+            //get the original likes array for the quote somehow
+            let mynwqtobj = {
+                author: myatr,
+                quote: myqt
+            };
+
+            let myconfigobj = {
+                method: "POST",
+                headers: {
+                    "Content-Type" :  "application/json",
+                    "Accept" : "application/json"
+                },
+                body: JSON.stringify(mynwqtobj)
+            };
+            fetch("http://localhost:3000/quotes/", myconfigobj).
+            then((oresponse) => oresponse.json()).
+            then(function(oresponse){
+                console.log("oresponse = " + oresponse);
+                console.log("oresponse.id = " + oresponse.id);
+                
+                let mynwidstr = "" + oresponse.id;
+                if (mynwidstr.length < 1) throw "invalid id retrieved from the response!";
+                //else;//do nothing
+                
+                let mynwqtobjtodom = {
+                    author: oresponse.author,
+                    id: oresponse.id,
+                    likes: [],
+                    quote: oresponse.quote
+                };
+                
+                //modify the DOM
+                let myqtlist = document.getElementById("quote-list");
+                myqtlist.appendChild(addQuoteToDOM(mynwqtobjtodom));
+                
+                //hook up the like edit delete buttons here
+                let mynweditbtn = document.getElementById(oresponse.id + "editbtn");
+                let mynwdelbtn = document.getElementById(oresponse.id + "delbtn");
+                let mynwlikebtn = document.getElementById(oresponse.id + "likebtn");
+                addDeleteListenerToButton(mynwdelbtn);
+                addEditListenerToButton(mynweditbtn);
+                addLikeListenerToButton(mynwlikebtn);
+                console.log("successfully added the new quote to the list!");
+                //debugger;
+            }).catch(function(err){
+                console.error("failed to add the quote to the list!");
+                console.error(err);
+            });
+            //debugger;
         });
         console.log("hooked up the add new quote form buttons!");
 
